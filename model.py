@@ -177,13 +177,15 @@ class Converter:
 
     def __convert_im(self, num: int) -> BitArray:
 
+        if self.debug:
+            print(f'### converting imaginary (dec) to cbns ###')
+
         # i*im = '11'*im
         p_sum_0 = self.__convert_re(num)
         p_sum_1 = p_sum_0 + BitArray(bin='0')
         p_sum_0 = BitArray(bin='0') + p_sum_0
 
         if self.debug:
-            print(f'### converting imaginary (dec) to cbns ###')
             print(f'partial sum 0: {from_cbns_to_cns(p_sum_0)} (dec) = {bitarr_str(p_sum_0)} (cbns)')
             print(f'partial sum 1: {from_cbns_to_cns(p_sum_1)} (dec) = {bitarr_str(p_sum_1)} (cbns)')
 
@@ -201,17 +203,22 @@ class Converter:
 
         re_cbns = self.__convert_re(re)
         im_cbns = self.__convert_im(im)
+        re_cbns = zero_extend(re_cbns, im_cbns.length)
 
         res = self.adder.add(re_cbns, im_cbns)
+
+        if self.debug:
+            print(f'{complex(re,im)} (dec) = {bitarr_str(re_cbns)}+{bitarr_str(im_cbns)} = {bitarr_str(res)} (cbns)')
 
         return res
 
 def test() -> bool:
     re_im_bitness = 8
-    conv = Converter(re_im_bitness, debug=True)
+    lim = 127
+    conv = Converter(re_im_bitness, debug=False)
 
-    for re in range(-10,10):
-        for im in range(-10,10):
+    for re in range(-lim,lim):
+        for im in range(-lim,lim):
 
             num_cbs = complex(re,im)
             num_cbns = conv.convert(re, im)
