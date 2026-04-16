@@ -140,6 +140,8 @@ class Converter:
         # i*im = '11'*im
         p_sum_0 = self.__convert_re(num)
         p_sum_1 = p_sum_0 + BitArray(bin='0')
+        
+        p_sum_0 = BitArray(bin='0') + p_sum_0
 
         mult = self.adder.add(p_sum_0, p_sum_1)
 
@@ -154,12 +156,37 @@ class Converter:
 
         return res
 
-if __name__ == '__main__':
+def check(cbns: BitArray):
+    base = complex(-1,1)
+    res = complex(0,0)
+
+    for i in range(cbns.length):
+        res += cbns[i] * base**(cbns.length-i-1)
+    
+    return res
+
+def test() -> bool:
     re_im_bitness = 8
     conv = Converter(re_im_bitness)
 
     for re in range(-10,10):
         for im in range(-10,10):
-            num = conv.convert(re, im)
-            print(f'{re}+{im}i = {num.bin}')
+
+            num_cbs = complex(re,im)
+            num_cbns = conv.convert(re, im)
+            valid = num_cbs == check(num_cbns)
+            if valid:
+                print(f'{num_cbs} = {num_cbns.bin}')
+            else:
+                print(f'{num_cbs} conversion failed (got {num_cbns.bin})')
+                return False
+
+    return True
+
+if __name__ == '__main__':
+    if test():
+        print('TEST PASSED')
+    else:
+        print('TEST FAILED')
+
 
