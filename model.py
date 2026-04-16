@@ -214,8 +214,8 @@ class Converter:
 
 def test() -> bool:
     re_im_bitness = 8
-    lim = 127
-    conv = Converter(re_im_bitness, debug=False)
+    lim = 10
+    conv = Converter(re_im_bitness, debug=True)
 
     for re in range(-lim,lim):
         for im in range(-lim,lim):
