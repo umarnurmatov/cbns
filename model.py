@@ -1,7 +1,6 @@
 from bitstring import BitArray, Bits
-import math
 
-MAX_CARRY = 8 # as show in W.Gilbert article
+MAX_CARRY = 8 # as shown in W.Gilbert article
 
 def is_even(x: int):
     return True if x % 2 == 0 else False
@@ -15,6 +14,26 @@ def zero_extend(x: BitArray, width: int):
         return BitArray(int=0, length=z_cnt) + x
     return x
 
+def from_cbns_to_cns(cbns: BitArray) -> complex:
+    base = complex(-1,1)
+    res = complex(0,0)
+
+    for i in range(cbns.length):
+        res += cbns[i] * base**(cbns.length-i-1)
+    
+    return res
+
+def from_base_neg4_to_dec(base_neg4_lst: list) -> int:
+    base = -4
+    res = 0
+
+    for i,dgt in enumerate(reversed(base_neg4_lst),start=0):
+        res += dgt * base**i
+
+    return res
+
+def bitarr_str(barr: BitArray):
+    return f'[{barr.bin}, {barr.length} bits]'
 
 class FullAdder:
 
@@ -60,15 +79,16 @@ class FullAdder:
 
 class RippleCarryAdder:
 
-    def __init__(self, arg_bitness: int, verbose: bool = False):
+    def __init__(self, arg_bitness: int, debug: bool = False):
         self.arg_bitness = arg_bitness
         self.full_adder = FullAdder()
-        self.verbose = verbose
+        self.verbose = debug
 
     # len(output) = len(n1)+8
     def add(self, n1: BitArray, n2: BitArray) -> BitArray:
 
         # assert n1.length == n2.length == self.arg_bitness
+        assert n1.length == n2.length
 
         sum_len = n1.length + MAX_CARRY
 
@@ -104,13 +124,15 @@ class Converter:
 
     __cnvrt_tbl_cbns = ['0000', '0001', '1100', '1101']
 
-    def __init__(self, re_im_bitness: int):
+    def __init__(self, re_im_bitness: int, debug: bool = False):
         self.re_im_bitness = re_im_bitness
             
         nibble_cnt = self.re_im_bitness // 4 + 1
         self.__schroeppel4 = int('c' * nibble_cnt, 16)
 
-        self.adder = RippleCarryAdder(self.re_im_bitness)
+        self.adder = RippleCarryAdder(self.re_im_bitness, debug)
+
+        self.debug = debug
 
     def __convert_re(self, num: int) -> BitArray:
         """
@@ -128,26 +150,54 @@ class Converter:
         for i in range(0, len(base_neg4_bin), 2):
             base_neg4_lst.append(self.__cnvrt_tbl_base_neg4[base_neg4_bin[i:i+2]])
 
+        if self.debug:
+            print(f'### converting real (dec) to cbns ###')
+            num_base_neg4_dec = from_base_neg4_to_dec(base_neg4_lst)
+            valid = num == num_base_neg4_dec
+            base_neg4_str = "".join([str(x) for x in base_neg4_lst])
+            if valid:
+                print(f'{num} (dec) = {base_neg4_str} (base -4)')
+            else:
+                print(f'{num}: converseion to base -4 failed (got {base_neg4_str} = {num_base_neg4_dec})')
 
-        res = BitArray()
+        num_cbns = BitArray()
         for dgt_neg4 in base_neg4_lst:
-            res.append(BitArray(bin=self.__cnvrt_tbl_cbns[dgt_neg4]))
+            num_cbns.append(BitArray(bin=self.__cnvrt_tbl_cbns[dgt_neg4]))
 
-        return res
+        if self.debug:
+            num_cbs = complex(num, 0)
+            num_cbs_from_cbns = from_cbns_to_cns(num_cbns)
+            valid = num_cbs == num_cbs_from_cbns
+            if valid:
+                print(f'{num} (dec) = {bitarr_str(num_cbns)} (cbns)')
+            else:
+                print(f'{num} (dec) conversion failed (got {bitarr_str(num_cbns)} = {num_cbs_from_cbns})')
+
+        return num_cbns
 
     def __convert_im(self, num: int) -> BitArray:
 
         # i*im = '11'*im
         p_sum_0 = self.__convert_re(num)
         p_sum_1 = p_sum_0 + BitArray(bin='0')
-        
         p_sum_0 = BitArray(bin='0') + p_sum_0
 
-        mult = self.adder.add(p_sum_0, p_sum_1)
+        if self.debug:
+            print(f'### converting imaginary (dec) to cbns ###')
+            print(f'partial sum 0: {from_cbns_to_cns(p_sum_0)} (dec) = {bitarr_str(p_sum_0)} (cbns)')
+            print(f'partial sum 1: {from_cbns_to_cns(p_sum_1)} (dec) = {bitarr_str(p_sum_1)} (cbns)')
 
-        return mult
+        product = self.adder.add(p_sum_0, p_sum_1)
+
+        if self.debug:
+            print(f'{num}j = psum0 + psum1 = {bitarr_str(product)}')
+
+        return product
 
     def convert(self, re: int, im: int) -> BitArray:
+
+        if self.debug:
+            print(f'########## CONVERTING {complex(re, im)} ##########')
 
         re_cbns = self.__convert_re(re)
         im_cbns = self.__convert_im(im)
@@ -156,29 +206,21 @@ class Converter:
 
         return res
 
-def check(cbns: BitArray):
-    base = complex(-1,1)
-    res = complex(0,0)
-
-    for i in range(cbns.length):
-        res += cbns[i] * base**(cbns.length-i-1)
-    
-    return res
-
 def test() -> bool:
     re_im_bitness = 8
-    conv = Converter(re_im_bitness)
+    conv = Converter(re_im_bitness, debug=True)
 
     for re in range(-10,10):
         for im in range(-10,10):
 
             num_cbs = complex(re,im)
             num_cbns = conv.convert(re, im)
-            valid = num_cbs == check(num_cbns)
+            num_cbs_from_cbns = from_cbns_to_cns(num_cbns)
+            valid = num_cbs == num_cbs_from_cbns
             if valid:
                 print(f'{num_cbs} = {num_cbns.bin}')
             else:
-                print(f'{num_cbs} conversion failed (got {num_cbns.bin})')
+                print(f'{num_cbs} conversion failed (got {num_cbns.bin} = {num_cbs_from_cbns})')
                 return False
 
     return True
