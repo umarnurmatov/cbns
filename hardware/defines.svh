@@ -1,0 +1,1 @@
+`define MX_CARRY_WIDTH 8
