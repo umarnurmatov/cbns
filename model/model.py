@@ -39,7 +39,7 @@ def from_base_neg4_to_dec(base_neg4_lst: list) -> int:
 
 
 def bitarr_str(barr: BitArray):
-    return f'[{barr.bin}, {barr.length} bits]'
+    return f'[{barr.bin}, {len(barr.bin.lstrip('0'))} bits]'
 
 def bitarr_shrink(barr: BitArray):
     return BitArray(bin=barr.bin.lstrip('0'))
@@ -236,9 +236,9 @@ class Converter:
 
 
 def test() -> bool:
-    re_im_bitness = 8
-    lim = 10
-    conv = Converter(re_im_bitness, debug=False)
+    re_im_bitness = 9
+    lim = 2**2
+    conv = Converter(re_im_bitness, debug=True)
 
     for re in range(-lim, lim):
         for im in range(-lim, lim):
