@@ -1,13 +1,13 @@
-import model.model as model
+import model as model
 import matplotlib.pyplot as plt
 
-def visualize(re_im_bitness: int):
+def visualize(re_im_width: int):
 
-    conv = model.Converter(re_im_bitness*2, debug=False)
-    l_range = -2**(re_im_bitness-1)
-    h_range = 2**(re_im_bitness-1)-1
+    conv = model.Converter(re_im_width*2, debug=False)
+    l_range = -2**(re_im_width-1)
+    h_range = 2**(re_im_width-1)-1
 
-    max_bitness = 0
+    max_width = 0
 
     points_x = []
     points_y = []
@@ -21,14 +21,14 @@ def visualize(re_im_bitness: int):
 
         for im in range(l_range, h_range+1):
             num_cbns = conv.convert(re, im)
-            bitness = model.bitarr_shrink(num_cbns).length
+            width = model.bitarr_shrink(num_cbns).length
             points_x.append(re)
             points_y.append(im)
-            colors.append(bitness)
-            max_bitness = max(max_bitness, bitness)
+            colors.append(width)
+            max_width = max(max_width, width)
 
     print('done')
-    print(f'CBNS bitness = {max_bitness} for im/re in [{l_range},{h_range}]')
+    print(f'CBNS width = {max_width} for im/re in [{l_range},{h_range}]')
 
     plt.figure()
     plt.scatter(x=points_x, y=points_y, c=colors, cmap='rainbow')
