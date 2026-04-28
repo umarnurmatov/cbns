@@ -2,25 +2,33 @@ module ripple_carry_adder #(
     parameter IN_WIDTH  = 20,
     parameter OUT_WIDTH = 20
 ) (
-    input wire [IN_WIDTH-1:0] a,
-    input wire [IN_WIDTH-1:0] b,
+    input logic clk,
+    input logic rst,
+
+    input logic [IN_WIDTH-1:0] a,
+    input logic [IN_WIDTH-1:0] b,
 
     output logic [OUT_WIDTH-1:0] sum,
     output logic [          7:0] carry_out
 );
 
-    wire [OUT_WIDTH-1:0] addend_a = { { OUT_WIDTH - IN_WIDTH {1'b0} }, a };
-    wire [OUT_WIDTH-1:0] addend_b = { { OUT_WIDTH - IN_WIDTH {1'b0} }, b };
+    logic [OUT_WIDTH-1:0] addend_a;
+    logic [OUT_WIDTH-1:0] addend_b;
+    logic [          7:0] carries [OUT_WIDTH+8];
 
-    logic [7:0] carries [OUT_WIDTH+8];
-
-    assign carry_out = carries[OUT_WIDTH];
+    always_comb begin
+        carry_out = carries[OUT_WIDTH];
+        addend_a  = { { OUT_WIDTH - IN_WIDTH {1'b0} }, a };
+        addend_b  = { { OUT_WIDTH - IN_WIDTH {1'b0} }, b };
+    end
 
     generate
         for(genvar i = 0; i < OUT_WIDTH; ++i) begin : genaddr
 
             full_adder i_full_adder
             (
+                .clk        (  clk                     ),
+                .rst        (  rst                     ),
                 .a          (  addend_a[    i]         ),
                 .b          (  addend_b[    i]         ),
                 .carry_in   (  carries [    i]         ),

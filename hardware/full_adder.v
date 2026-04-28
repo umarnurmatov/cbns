@@ -1,15 +1,21 @@
 module full_adder
 (
-    input wire       a,
-    input wire       b,
-    input wire [7:0] carry_in,
+    input logic      clk,
+    input logic      rst,
+
+    input logic       a,
+    input logic       b,
+    input logic [7:0] carry_in,
     
     output logic       s_out,
     output logic [7:0] carry_out
 );
 
     logic [$clog2(8):0] ones;
-    assign ones = $countones(carry_in) + a + b;         // TODO optimize popcount
+
+    always_comb begin
+        ones = $countones(carry_in) + a + b;         // TODO optimize popcount
+    end
 
     always_comb begin
         case(ones)

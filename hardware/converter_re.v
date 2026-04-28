@@ -4,19 +4,29 @@ module converter_re #(
     parameter IN_WIDTH  = 8,
     parameter OUT_WIDTH = 20
 ) (
-    input wire signed [IN_WIDTH-1:0] in,
+    input logic clk,
+    input logic rst,
+
+    input logic signed [IN_WIDTH-1:0] in,
 
     output logic [OUT_WIDTH-1:0] out
 );
 
-    localparam BASE_NEG4_WIDTH = `ceil_nearest_even(IN_WIDTH + 1);
+    localparam BASE_NEG4_WIDTH = `ceil_nearest_even(IN_WIDTH + 2);
 
-    // TODO maybe use $signed()?
-    wire signed [BASE_NEG4_WIDTH-1:0] in_extend = { { BASE_NEG4_WIDTH - IN_WIDTH {in[IN_WIDTH-1]}}, in };
+    logic signed [BASE_NEG4_WIDTH-1:0] in_extend;
+    logic signed [BASE_NEG4_WIDTH-1:0] shroeppel;
+    logic signed [BASE_NEG4_WIDTH-1:0] base_neg4;
 
-    wire signed [BASE_NEG4_WIDTH-1:0] shroeppel = { IN_WIDTH/4 + 1 {4'hC} }; // TODO fix width truncation
+    always_comb begin
+        // TODO maybe use $signed()?
+        in_extend  = { { BASE_NEG4_WIDTH - IN_WIDTH {in[IN_WIDTH-1]}}, in }; 
 
-    wire signed [BASE_NEG4_WIDTH-1:0] base_neg4 = (in_extend + shroeppel) ^ shroeppel;
+        // TODO fix width truncation
+        shroeppel  = { IN_WIDTH/4 + 1 {4'hC} }; 
+        
+        base_neg4  = (in_extend + shroeppel) ^ shroeppel;
+    end
 
     always_comb begin
 
