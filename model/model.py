@@ -1,4 +1,6 @@
 from bitstring import BitArray
+from rich.progress import Progress
+import math
 
 MAX_CARRY = 8  # as shown in W.Gilbert article
 
@@ -39,7 +41,7 @@ def from_base_neg4_to_dec(base_neg4_lst: list) -> int:
 
 
 def bitarr_str(barr: BitArray):
-    return f'[{barr.bin}, {barr.length} bits]'
+    return f'[{barr.bin}, {len(barr.bin.lstrip('0'))} bits]'
 
 def bitarr_shrink(barr: BitArray):
     return BitArray(bin=barr.bin.lstrip('0'))
@@ -90,38 +92,38 @@ class FullAdder:
 
 class RippleCarryAdder:
 
-    def __init__(self, arg_bitness: int, debug: bool = False):
-        self.arg_bitness = arg_bitness
+    def __init__(self, arg_width: int, debug: bool = False):
+        self.arg_width = arg_width
         self.full_adder = FullAdder()
         self.verbose = debug
+
+        self.carries = []
+        for i in range(arg_width + MAX_CARRY):
+            self.carries.append(BitArray(length=MAX_CARRY))
 
     # len(output) = len(n1)+8
     def add(self, n1: BitArray, n2: BitArray) -> BitArray:
 
-        # assert n1.length == n2.length == self.arg_bitness
+        # assert n1.length == n2.length == self.arg_width
         assert n1.length == n2.length
 
         sum_len = n1.length + MAX_CARRY
-
-        carries = []
-        for i in range(sum_len):
-            carries.append(BitArray(length=MAX_CARRY))
 
         sum_bits = BitArray(length=sum_len)
 
         for i in range(sum_len):
 
             if i < n1.length:
-                s, carry = self.full_adder.add(n1[-i-1], n2[-i-1], carries[i])
+                s, carry = self.full_adder.add(n1[-i-1], n2[-i-1], self.carries[i])
             else:
-                s, carry = self.full_adder.add(False, False, carries[i])
+                s, carry = self.full_adder.add(False, False, self.carries[i])
 
             for j in range(min(sum_len-i-1, MAX_CARRY)):
-                carries[i+j+1][i % MAX_CARRY] = carry[j]
+                self.carries[i+j+1][i % MAX_CARRY] = carry[j]
 
             if self.verbose:
                 print(f'{i}\t| s: {s}, c_out: {carry.bin}, carries: ', end='')
-                for cr in carries:
+                for cr in self.carries:
                     print(cr.bin, end=' ')
                 print()
 
@@ -136,13 +138,13 @@ class Converter:
 
     __cnvrt_tbl_cbns = ['0000', '0001', '1100', '1101']
 
-    def __init__(self, re_im_bitness: int, debug: bool = False):
-        self.re_im_bitness = re_im_bitness
+    def __init__(self, re_im_width: int, debug: bool = False):
+        self.re_im_width = re_im_width
 
-        nibble_cnt = self.re_im_bitness // 4 + 1
+        nibble_cnt = self.re_im_width // 4 + 1
         self.__schroeppel4 = int('c' * nibble_cnt, 16)
 
-        self.adder = RippleCarryAdder(self.re_im_bitness, debug)
+        self.adder = RippleCarryAdder(self.re_im_width * 4 + MAX_CARRY, debug)
 
         self.debug = debug
 
@@ -150,7 +152,7 @@ class Converter:
         """
         https://en.wikipedia.org/wiki/Negative_base#Shortcut_calculation
         """
-        assert len(bin(num)[2:]) <= self.re_im_bitness
+        assert math.log2(abs(num)) <= self.re_im_width if num != 0 else True
 
         base_neg4 = (num + self.__schroeppel4) ^ self.__schroeppel4
         base_neg4_bin = bin(base_neg4)[2:]
@@ -235,24 +237,32 @@ class Converter:
         return res
 
 
-def test() -> bool:
-    re_im_bitness = 8
-    lim = 10
-    conv = Converter(re_im_bitness, debug=False)
+def test(debug=False, re_im_width=8) -> bool:
 
-    for re in range(-lim, lim):
-        for im in range(-lim, lim):
+    lo_bound = -2**(re_im_width-1)
+    up_bound = 2**(re_im_width-1)-1
 
-            num_cbs = complex(re, im)
-            num_cbns = conv.convert(re, im)
-            num_cbs_from_cbns = from_cbns_to_cns(num_cbns)
-            valid = num_cbs == num_cbs_from_cbns
-            if valid:
-                print(f'{num_cbs} = {bitarr_str(bitarr_shrink(num_cbns))}')
-            else:
-                print(
-                    f'{num_cbs} conversion failed (got {num_cbns.bin} = {num_cbs_from_cbns})')
-                return False
+    conv = Converter(re_im_width, debug=debug)
+
+    with Progress() as progress:
+
+        task = progress.add_task("Performing tests...", total=2**(2*re_im_width))
+
+        for re in range(lo_bound, up_bound):
+            for im in range(lo_bound, up_bound):
+
+                num_cbs = complex(re, im)
+                num_cbns = conv.convert(re, im)
+                num_cbs_from_cbns = from_cbns_to_cns(num_cbns)
+                valid = num_cbs == num_cbs_from_cbns
+                if valid and debug:
+                    print(f'{num_cbs} = {bitarr_str(bitarr_shrink(num_cbns))}')
+                elif not valid:
+                    print(
+                        f'{num_cbs} conversion failed (got {num_cbns.bin} = {num_cbs_from_cbns})')
+                    return False
+
+                progress.update(task, advance=1)
 
     return True
 
