@@ -48,6 +48,7 @@ module ripple_carry_adder #(
                                carries [i + 2][i % 8], 
                                carries [i + 1][i % 8] })
             );
+
         end
     endgenerate
 
