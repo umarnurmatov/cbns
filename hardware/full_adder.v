@@ -8,7 +8,7 @@ module full_adder
     input logic [7:0] carry_in,
     
     output logic       s_out,
-    output logic [7:0] carry_out
+    output wire [7:0] carry_out
 );
 
     logic [$clog2(8):0] ones;
@@ -19,6 +19,7 @@ module full_adder
     end
 
     always_comb begin
+      { s_out, carry_out } = 9'b000000000;
         case(ones)
             'd0: { s_out, carry_out } = 9'b000000000;
             'd1: { s_out, carry_out } = 9'b100000000;
@@ -29,8 +30,6 @@ module full_adder
             'd6: { s_out, carry_out } = 9'b011101110;
             'd7: { s_out, carry_out } = 9'b111101110;
             'd8: { s_out, carry_out } = 9'b011100000;
-            default: 
-                { s_out, carry_out } = 9'bxxxxxxxx;
         endcase
     end
 

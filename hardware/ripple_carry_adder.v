@@ -18,10 +18,11 @@ module ripple_carry_adder #(
     logic [OUT_WIDTH-1:0] addend_a;
     logic [OUT_WIDTH-1:0] addend_b;
     logic [OUT_WIDTH-1:0] sum_comb;
+    logic                 sum_valid;
     logic [          7:0] carries [OUT_WIDTH+8];
 
     always_comb begin
-        carry_out = carries[OUT_WIDTH];
+        carries [0] = 'b0;
         addend_a  = { { OUT_WIDTH - IN_WIDTH {1'b0} }, a };
         addend_b  = { { OUT_WIDTH - IN_WIDTH {1'b0} }, b };
     end
@@ -51,14 +52,21 @@ module ripple_carry_adder #(
         end
     endgenerate
 
+    assign sum_valid = a_valid & b_valid;
+
     always_ff @(posedge clk) begin
         if (rst) begin
+            sum       <= '0;
+            carry_out <= '0;
             res_valid <= 0; 
         end 
         else begin
-            res_valid <= a_valid & b_valid; 
+            res_valid <= sum_valid; 
 
-            if(a_valid & b_valid) sum <= sum_comb;
+            if(sum_valid) begin 
+                sum       <= sum_comb;
+                carry_out <= carries[OUT_WIDTH];
+            end
         end
     end
     

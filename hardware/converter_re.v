@@ -53,8 +53,8 @@ module converter_re #(
             out       <= '0;
         end
         else begin
-            out_valid <= in_valid; 
-            out       <= cbns;
+            if (in_valid) out       <= cbns;
+                          out_valid <= in_valid; 
         end
     end
 

@@ -13,7 +13,7 @@ module converter_im #(
 );
 
     typedef enum {
-        STATE_CONVERT,
+        STATE_CONVERT_RE,
         STATE_MULTIPLY
     } state_t;
 
@@ -27,25 +27,19 @@ module converter_im #(
 
     // -------------------- STATE MACHINE LOGIC --------------------
     
+    // State transition
     always_comb begin
         next_state = state;
         case (state)
-            STATE_CONVERT:  if (p_sum_0_valid) next_state = STATE_MULTIPLY;
-            STATE_MULTIPLY: if (    sum_valid) next_state = STATE_CONVERT;
+            STATE_CONVERT_RE: if (p_sum_0_valid) next_state = STATE_MULTIPLY;
+            STATE_MULTIPLY:   if (    sum_valid) next_state = STATE_CONVERT_RE;
         endcase
     end
 
-    always_ff @(posedge clk) begin
-        case (state)
-            STATE_CONVERT:  begin end
-            STATE_MULTIPLY:
-                if (sum_valid) out <= sum;
-        endcase
-    end
-
+    // State register
     always_ff @(posedge clk) begin
         if (rst) begin
-            state <= STATE_CONVERT;
+            state <= STATE_CONVERT_RE;
         end
         else begin
             state <= next_state;
@@ -54,18 +48,18 @@ module converter_im #(
 
     // -------------------------------------------------------------
 
-    assign p_sum_1 = p_sum_0 << 1;
-
     always_ff @(posedge clk) begin
         if (rst) begin
-            out_valid <= 0; 
+            out_valid <= 0;
+            out       <= '0;
         end
         else begin
-            out_valid <= sum_valid & (state == STATE_MULTIPLY);
+            if (sum_valid) out       <= sum;
+                           out_valid <= sum_valid & (state == STATE_MULTIPLY);
         end
     end
 
-    // -------------------------------------------------------------
+    // ------------------------- MODULES ---------------------------
 
     converter_re #(.IN_WIDTH(IN_WIDTH), .OUT_WIDTH(OUT_WIDTH))
     i_converter_re
@@ -77,6 +71,8 @@ module converter_im #(
         .out        (p_sum_0      ),
         .out_valid  (p_sum_0_valid)
     );
+
+    assign p_sum_1 = p_sum_0 << 1;
 
     ripple_carry_adder #(.IN_WIDTH(OUT_WIDTH), .OUT_WIDTH(OUT_WIDTH))
     i_ripple_carry_adder

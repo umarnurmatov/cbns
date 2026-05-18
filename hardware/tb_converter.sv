@@ -112,6 +112,11 @@ module tb;
                 re_valid <= 1;
                 im_valid <= 1;
 
+                @(posedge clk);
+
+                re_valid <= 0;
+                im_valid <= 0;
+
                 @(negedge converted_valid);
 
                 cbns_to_complex(converted, converted_re, converted_im);
@@ -119,8 +124,6 @@ module tb;
                 if (converted_re !== re || converted_im !== im) begin
                     $display({"(test %5d) ", `RED("[FAIL]   "), "%d + %dj = %b (actual %5d+%5di)"},
                              test_cnt, re, im, converted, converted_re, converted_im);
-                    failed = 1;
-                    break;
                 end
                 else begin
                     $display({"(test %5d) ", `GREEN("[  OK]   "), "%d + %dj = %b"},

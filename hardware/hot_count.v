@@ -5,8 +5,8 @@ module hot_count #(
     output logic [$clog2(WIDTH+1)-1:0] cnt
 );
 
-always_comb  begin
-    cnt = { $clog2(WIDTH+1) {1'b0} };  
+always_comb begin
+    cnt = '0;  
     for(int idx = 0; idx < WIDTH; idx = idx + 1) begin
         cnt = cnt + value[idx];
     end

@@ -26,11 +26,23 @@ module converter #(
     logic                 re_converted_valid;
     logic [OUT_WIDTH-1:0] im_converted;
     logic                 im_converted_valid;
+    logic [OUT_WIDTH-1:0] sum;
     logic                 sum_valid;
 
 
     // -------------------- STATE MACHINE LOGIC --------------------
 
+    
+    // State transition logic
+    always_comb begin
+        next_state = state;
+        case (state) 
+            STATE_CONVERT: if(re_valid & im_valid) next_state = STATE_ADD;
+            STATE_ADD:     if(sum_valid          ) next_state = STATE_CONVERT;
+        endcase
+    end
+    
+    // State register
     always_ff @(posedge clk) begin
         if (rst) begin
             state <= STATE_CONVERT; 
@@ -41,6 +53,19 @@ module converter #(
     end
 
     // -------------------------------------------------------------
+    
+    always_ff @(posedge clk) begin
+        if (rst) begin
+            converted       <= '0;
+            converted_valid <= 0;
+        end
+        else begin
+            converted       <= sum;
+            converted_valid <= sum_valid & (state == STATE_ADD);
+        end
+    end
+
+    // ------------------------- MODULES ---------------------------
     
     converter_re #(.IN_WIDTH(IN_WIDTH), .OUT_WIDTH(OUT_WIDTH))
     i_converter_re
@@ -70,21 +95,13 @@ module converter #(
         .clk        (clk               ),
         .rst        (rst               ),
         .a          (re_converted      ),
-        .a_valid    (re_converted_valid),
+        .a_valid    (im_converted_valid),
         .b          (im_converted      ),
         .b_valid    (im_converted_valid),
-        .sum        (converted         ),
+        .sum        (sum               ),
         .carry_out  (                  ),
         .res_valid  (sum_valid         )
     );
 
-    always_ff @(posedge clk) begin
-        if (rst) begin
-            converted_valid <= 0;
-        end
-        else begin
-            converted_valid <= sum_valid; 
-        end
-    end
 
 endmodule : converter
