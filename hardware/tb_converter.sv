@@ -17,22 +17,28 @@ module tb;
     localparam int L_BOUND = -$rtoi($pow(2, IN_WIDTH - 1));
     localparam int H_BOUND =  $rtoi($pow(2, IN_WIDTH - 1)) - 1;
 
-    logic signed [ IN_WIDTH-1:0] re;
-    logic signed [ IN_WIDTH-1:0] im;
-    logic        [OUT_WIDTH-1:0] converted;
     logic                        clk;
     logic                        rst;
+    logic signed [ IN_WIDTH-1:0] re;
+    logic                        re_valid;
+    logic signed [ IN_WIDTH-1:0] im;
+    logic                        im_valid;
+    logic        [OUT_WIDTH-1:0] converted;
+    logic                        converted_valid;
 
     //-------------------------------------------------------------
 
     converter #(.IN_WIDTH(IN_WIDTH), .OUT_WIDTH(OUT_WIDTH))
     i_converter
     (
-        .clk        (clk      ),
-        .rst        (rst      ),
-        .re         (re       ),
-        .im         (im       ),
-        .converted  (converted)
+        .clk             (clk            ),
+        .rst             (rst            ),
+        .re              (re             ),
+        .re_valid        (re_valid       ),
+        .im              (im             ),
+        .im_valid        (im_valid       ),
+        .converted       (converted      ),
+        .converted_valid (converted_valid)
     );
 
     //-------------------------------------------------------------
@@ -101,18 +107,24 @@ module tb;
             im_int = L_BOUND;
             for(; im_int <= H_BOUND; im_int += 1) begin
 
-                re <= re_int;
-                im <= im_int;
+                re       <= re_int;
+                im       <= im_int;
+                re_valid <= 1;
+                im_valid <= 1;
 
-                #1;
+                @(negedge converted_valid);
 
                 cbns_to_complex(converted, converted_re, converted_im);
 
-                if (converted_re != re || converted_im != im) begin
+                if (converted_re !== re || converted_im !== im) begin
                     $display({"(test %5d) ", `RED("[FAIL]   "), "%d + %dj = %b (actual %5d+%5di)"},
                              test_cnt, re, im, converted, converted_re, converted_im);
                     failed = 1;
                     break;
+                end
+                else begin
+                    $display({"(test %5d) ", `GREEN("[  OK]   "), "%d + %dj = %b"},
+                             test_cnt, re, im, converted);
                 end
 
                 test_cnt++;
@@ -133,11 +145,9 @@ module tb;
 
     //-------------------------------------------------------------
 
-`ifdef DUMP
     initial begin
         $dumpfile(`DUMP_FILE);
         $dumpvars();
     end
-`endif 
 
 endmodule : tb

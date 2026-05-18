@@ -12,9 +12,10 @@ module full_adder
 );
 
     logic [$clog2(8):0] ones;
+    logic [$clog2(8):0] carry_in_ones;
 
     always_comb begin
-        ones = $countones(carry_in) + a + b;         // TODO optimize popcount
+        ones = carry_in_ones + a + b;         // TODO optimize popcount
     end
 
     always_comb begin
@@ -28,7 +29,16 @@ module full_adder
             'd6: { s_out, carry_out } = 9'b011101110;
             'd7: { s_out, carry_out } = 9'b111101110;
             'd8: { s_out, carry_out } = 9'b011100000;
+            default: 
+                { s_out, carry_out } = 9'bxxxxxxxx;
         endcase
     end
+
+    hot_count #( .WIDTH(8) )
+    i_hot_count
+    (
+        .value (carry_in),
+        .cnt   (carry_in_ones)
+    );
     
 endmodule : full_adder
