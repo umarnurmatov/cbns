@@ -114,6 +114,7 @@ cat > "$QSF" <<EOF
 set_global_assignment -name PROJECT_OUTPUT_DIRECTORY "$(realpath $BUILD_DIR)"
 set_global_assignment -name TOP_LEVEL_ENTITY "$TOP_MODULE"
 set_global_assignment -name VERILOG_INPUT_VERSION SystemVerilog_2005
+set_instance_assignment -name PRESERVE_REGISTER ON -to "top"
 EOF
 
 while IFS= read -r src_file; do

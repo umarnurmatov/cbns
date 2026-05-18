@@ -124,6 +124,8 @@ module tb;
                 if (converted_re !== re || converted_im !== im) begin
                     $display({"(test %5d) ", `RED("[FAIL]   "), "%d + %dj = %b (actual %5d+%5di)"},
                              test_cnt, re, im, converted, converted_re, converted_im);
+                    failed = 1;
+                    break;
                 end
                 else begin
                     $display({"(test %5d) ", `GREEN("[  OK]   "), "%d + %dj = %b"},

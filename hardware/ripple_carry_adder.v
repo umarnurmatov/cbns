@@ -23,8 +23,8 @@ module ripple_carry_adder #(
 
     always_comb begin
         carries [0] = 'b0;
-        addend_a  = { { OUT_WIDTH - IN_WIDTH {1'b0} }, a };
-        addend_b  = { { OUT_WIDTH - IN_WIDTH {1'b0} }, b };
+        addend_a    = { { OUT_WIDTH - IN_WIDTH {1'b0} }, a };
+        addend_b    = { { OUT_WIDTH - IN_WIDTH {1'b0} }, b };
     end
 
     generate
@@ -48,7 +48,6 @@ module ripple_carry_adder #(
                                carries [i + 2][i % 8], 
                                carries [i + 1][i % 8] })
             );
-
         end
     endgenerate
 

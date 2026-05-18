@@ -4,26 +4,21 @@
 
 module top
 # (
-    parameter clk_mhz       = 50,
-
-              w_key         = 4,
-              w_sw          = 4,
-              w_led         = 4,
-              w_digit       = 4,
-
-              w_red         = 1,
-              w_green       = 1,
-              w_blue        = 1
+    parameter CLK_MHZ       = 50,
+              KEY_W         = 4,
+              SW_W          = 4,
+              LED_W         = 4,
+              DIGIT_W       = 4
 )
 (
     input                  CLK,
     input                  RESET,
 
-    input  [w_key   - 1:0] KEY_SW,
-    output [w_led   - 1:0] LED,
+    input  [KEY_W   - 1:0] KEY_SW,
+    output [LED_W   - 1:0] LED,
 
     output [          7:0] SEG,
-    output [w_digit - 1:0] DIG
+    output [DIGIT_W - 1:0] DIG
 );
 
     //------------------------------------------------------------------------
@@ -43,9 +38,13 @@ module top
 
     //------------------------------------------------------------------------
     
-    assign SEG      = converted[7:0];
-    assign re_valid = 1;
-    assign im_valid = 1;
+    // Hardcoded, because otherwise Quartus will optimize hole circuit entirely
+    assign SEG[0]   = &converted;
+    assign SEG[1]   = converted_valid;
+    assign re_valid = KEY_SW[0];
+    assign im_valid = KEY_SW[1];
+    assign re       = { IN_WIDTH { KEY_SW[0] } }; 
+    assign im       = { IN_WIDTH { KEY_SW[0] } }; 
 
     //------------------------------------------------------------------------
 

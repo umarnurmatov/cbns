@@ -22,8 +22,8 @@ module converter_re #(
     logic        [      OUT_WIDTH-1:0] cbns;
 
     always_comb begin
-        // TODO maybe use $signed()?
-        in_extend  = { { BASE_NEG4_WIDTH - IN_WIDTH {in[IN_WIDTH-1]}}, in }; 
+        // TODO maybe (not) use $signed()?
+        in_extend  = $signed({ { BASE_NEG4_WIDTH - IN_WIDTH {in[IN_WIDTH-1]}}, in });
 
         // TODO fix width truncation
         shroeppel  = { IN_WIDTH/4 + 1 {4'hC} }; 
