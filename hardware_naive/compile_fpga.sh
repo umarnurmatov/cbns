@@ -3,7 +3,7 @@ set -euo pipefail
 
 # ----------------------------- Configuration ---------------------------------
 # Default values
-PROJECT_NAME="cbns"
+PROJECT_NAME="complex_adder"
 BUILD_DIR="quartus"
 TOP_MODULE="top"
 FILELIST="fpga_filelist.txt"
