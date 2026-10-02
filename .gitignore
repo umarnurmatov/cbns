@@ -220,6 +220,11 @@ __marimo__/
 *.vcd
 *.vvp
 
+# Quartus
+quartus/
+db/
+incremental_db/
+
 # VSCode
 
 *.vscode

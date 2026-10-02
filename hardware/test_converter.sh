@@ -2,11 +2,11 @@
 
 set -e
 
-MODULES="converter_im.v converter_re.v ripple_carry_adder.v full_adder.v converter.v"
+MODULES="converter_im.v converter_re.v ripple_carry_adder.v full_adder.v hot_count.v converter.v"
 TESTBENCH="tb_converter.sv"
 BUILD_DIR="build/converter"
 DUMP_DIR="dump/converter"
-WIDTH=(7 8 9 10)
+WIDTH=(7)
 
 mkdir -p $BUILD_DIR
 mkdir -p $DUMP_DIR
